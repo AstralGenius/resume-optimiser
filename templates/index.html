@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Resume Optimiser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+        }
+        .card {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+        h1 { color: #1e3a8a; text-align: center; margin-bottom: 20px; }
+        input, textarea, button {
+            width: 100%; padding: 10px; margin-bottom: 15px;
+            border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box;
+        }
+        button { background-color: #1e3a8a; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #3746b2; }
+        #status { font-weight: bold; color: #1e3a8a; text-align: center; margin-bottom: 15px; }
+        label { font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>AI Resume Optimiser</h1>
+        <p id="status"></p>
+        <form id="resumeForm" enctype="multipart/form-data">
+            <input type="file" name="resume_file" id="resume_file" accept=".docx,.pdf" required>
+            <textarea id="job" placeholder="Paste job description here..." rows="7" required></textarea>
+            <label><input type="checkbox" id="ats_keywords"> Add ATS keywords</label><br><br>
+            <button type="submit">Optimize</button>
+        </form>
+    </div>
+
+    <script>
+        const status = document.getElementById("status");
+        document.getElementById("resumeForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append("resume_file", document.getElementById("resume_file").files[0]);
+            formData.append("job", document.getElementById("job").value);
+            formData.append("ats_keywords", document.getElementById("ats_keywords").checked);
+
+            status.innerText = "Optimizing... please wait";
+
+            const res = await fetch("/optimize_file", { method: "POST", body: formData });
+            status.innerText = "";
+
+            if (res.status === 200) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "Optimized_Resume.docx";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                status.innerText = "✅ Download ready!";
+            } else {
+                const text = await res.text();
+                alert("Error: " + text);
+            }
+        };
+    </script>
+</body>
+</html>
